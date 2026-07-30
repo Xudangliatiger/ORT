@@ -1,0 +1,7 @@
+accelerate>=0.29
+datasets>=2.18
+einops>=0.7
+numpy>=1.26
+omegaconf>=2.3
+pytest>=8.0
+torch>=2.3
