@@ -231,6 +231,7 @@ def main() -> None:
             batch_offset = 0
 
     save_checkpoint(accelerator, model, output_dir, step, epoch, batch_offset)
+    accelerator.end_training()
 
 
 if __name__ == "__main__":

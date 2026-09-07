@@ -18,3 +18,13 @@ settings. Exact published metric equivalence is not established here.
 and [RAR](https://github.com/bytedance/1d-tokenizer/tree/942a96fbdd873780179d1b78d5462911528bf8c8)
 are upstream sources. LlamaGen MIT and inherited Apache notices are retained.
 No weights, datasets, internal handoff notes or machine-specific paths are included.
+
+## Retained source file hashes
+
+SHA-256 identifies the unmodified implementation files in this extraction.
+
+- `modeling/generators/ort.py`: `492943002ca8d47033e30bdce940e39b00ed4a1bdcf2bda51de221c244a1ae91`
+- `modeling/losses/ort_ar_loss.py`: `714d5c11ecfc0ed9a2f4e84f3ef679bfc799720a4d83884b06d9149c3b5a6014`
+- `modeling/tokenizers/alitok.py`: `949a00563300931cecd0c7b436872725c1a4b22e24eaccd5751908d6df1b07b7`
+- `modeling/modules/base_model.py`: `a68ec3bf8ec971406f80bcb5bee9b56f6117e7832cdc1a05b3a18b068a3c0ea0`
+- `utils/registry.py`: `144473521fed583aa17e6fcdbdea226d823dc9fcf5603eb4cd7c780fcadc273c`

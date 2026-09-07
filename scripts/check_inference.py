@@ -16,6 +16,7 @@ p.add_argument('--checkpoint', required=True)
 p.add_argument('--tokenizer-weights')
 p.add_argument('--output', required=True)
 p.add_argument('--seed', type=int, default=2)
+p.add_argument('--backward-check', action='store_true', help='Run one synthetic optimizer update after inference')
 a = p.parse_args()
 c = OmegaConf.load(a.config)
 torch.manual_seed(a.seed)
@@ -42,3 +43,18 @@ if a.tokenizer_weights:
     image = (pixels[0].clamp(0,1)*255).permute(1,2,0).to('cpu',torch.uint8).numpy()
     Image.fromarray(image).save(r / 'sample.png')
     print('PASS tokenizer load and 256x256 image decode', flush=True)
+
+if a.backward_check:
+    tokens = tokens.clone()
+    m.train()
+    m.set_random_ratio(1.0)
+    optimizer = torch.optim.AdamW(m.parameters(), lr=1e-5)
+    with torch.autocast('cuda', dtype=torch.bfloat16):
+        logits, labels, weights = m(tokens, m.preprocess_condition(torch.tensor([1], device='cuda')), return_labels=True)
+        loss, _ = ORTARLoss(c)(logits, labels, weights)
+    assert torch.isfinite(loss)
+    loss.backward()
+    grads = [v.grad for v in m.parameters() if v.grad is not None]
+    assert grads and all(torch.isfinite(g).all() for g in grads)
+    optimizer.step()
+    print(f'PASS full model backward and optimizer update: loss={loss.item():.6f}', flush=True)

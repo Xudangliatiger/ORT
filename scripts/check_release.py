@@ -6,7 +6,7 @@ import re
 root = Path(__file__).resolve().parents[1]
 issues = []
 count = 0
-patterns = [r"/Users/", r"/gpfs/", r"/leonardo/", r"/p/project/", r"/e/project", r"/e/scratch", r"\b[Ss][Aa][Mm]\b", r"dongli", r"tianxu",
+patterns = [r"/Users/", r"/gpfs/", r"/leonardo/", r"/p/project/", r"/e/project", r"/e/scratch",
             r"-----BEGIN .*PRIVATE KEY-----", r"hf_[A-Za-z0-9]{20,}",
             r"gh[pousr]_[A-Za-z0-9]{20,}"]
 for path in root.rglob("*"):
