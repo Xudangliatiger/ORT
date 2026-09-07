@@ -1,111 +1,60 @@
 # Ordinal-Biased Random Training (ORT)
 
-This is an anonymized, minimal implementation of Ordinal-Biased Random Training
-for class-conditional visual autoregressive models. It contains only the code needed
-to inspect, train, and sample the ORT token generator; unrelated experiments, logs,
-checkpoints, cluster scripts, and author metadata are intentionally excluded.
+Minimal ORT training and inference code extracted from the GNN codebase.
+Includes the original ORT generator, ordinal cross-entropy loss, AliTok tokenizer,
+pretokenized trainer, full-state resume, token sampling and image decoding.
 
-## Method in one paragraph
-
-During randomized-order training, ORT assigns a linear position-dependent weight
-to each token loss:
-
-```text
-w(t; alpha, beta) = alpha + (beta - alpha) * t / (T - 1).
-```
-
-The provided configuration uses biased weights in the randomized phase. The
-probability of using a randomized path is then annealed from one to zero, so training
-transitions to uniformly weighted raster paths. No architecture or inference-time
-change is required.
-
-## Contents
-
-- `ort/model.py`: autoregressive transformer, randomized/raster order sampling,
-  ordinal weights, annealing schedule, and generation.
-- `ort/loss.py`: weighted token-level cross entropy.
-- `configs/ort_alitok_xl.yaml`: the 300-epoch AliTok-XL ORT configuration.
-- `train.py`: minimal Accelerate trainer for pretokenized datasets.
-- `sample_tokens.py`: class-conditional token sampling from a checkpoint.
-- `tests/test_smoke.py`: CPU forward/backward and schedule tests.
-
-## Installation
+## Install
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+python -m pytest -q
 ```
 
-## Data format
+Use a CUDA-compatible PyTorch build on GPU machines. Existing HPC module
+installations may be reused in an isolated environment. Weights and data are
+supplied separately.
 
-`train.py` expects a Hugging Face dataset saved with `Dataset.save_to_disk`.
-Every record must contain:
+## Train
 
-- `label`: ImageNet class index.
-- `tokens`: one sequence of 273 AliTok token IDs, or a list of crop-specific
-  sequences from which one is sampled during training.
-
-AliTok tokenizer/decoder code and weights should be obtained from the official
-`ali-vilab/alitok` release. They are deliberately not duplicated here.
-
-## Training
-
-Edit the dataset path in `configs/ort_alitok_xl.yaml`, or override it:
+The dataset is a Hugging Face `save_to_disk` dataset with `label` and `tokens`
+columns. Tokens are 273 AliTok IDs in [0,4095], optionally multiple crop sequences.
 
 ```bash
-accelerate launch train.py \
-  --config configs/ort_alitok_xl.yaml \
-  --dataset /path/to/pretokenized_imagenet \
-  --output outputs/ort_alitok_xl
+accelerate launch --num_processes 32 train.py --config configs/ort_e_alitok_xl_400.yaml --dataset /path/to/tokens --output outputs/ort_e_seed42
 ```
 
-The paper's 300-epoch setting corresponds to 187,500 optimizer steps at global
-batch size 2,048. The randomized-path probability is 1 through step 62,500,
-anneals to 0 by step 125,000, and remains 0 afterward.
+Maintain global batch 2048 = world size × per-GPU batch × gradient accumulation.
+For multiple hosts, configure Accelerate machine count, ranks and rendezvous.
+The 400-epoch recipe has 250000 optimizer updates; the separate 300-epoch recipe
+has a full 187500-update cosine horizon. Epoch names follow the nominal source
+convention of 625 updates per epoch.
 
-The default configuration contains the main ORT-L setting
-`(alpha, beta) = (0.75, 1.25)`. Other paper settings can be selected without
-code changes, for example:
+`--stop-after N` stops early without changing the schedule. Resume with the same
+recipe and topology using `--resume outputs/ort_e_seed42/checkpoint-0000010`.
+Training seed is in the YAML; sampling seed is a separate CLI argument.
+
+## Inference
 
 ```bash
-# Early bias used in ORT-E experiments
-python -c "from omegaconf import OmegaConf; c=OmegaConf.load('configs/ort_alitok_xl.yaml'); c.model.loss.alpha_weight_random=1.0; c.model.loss.beta_weight_random=0.0; OmegaConf.save(c, 'configs/ort_e.yaml')"
+python sample_tokens.py --config configs/ort_e_alitok_xl_400.yaml --checkpoint /path/to/ort.bin --seed 2 --labels 1 7 --output outputs/tokens.npz
+python scripts/check_inference.py --config configs/ort_e_alitok_xl_400.yaml --checkpoint /path/to/ort.bin --tokenizer-weights /path/to/AliTok.pth --output outputs/image
 ```
 
-## Sampling
-
-The sampling script produces token IDs:
+For a balanced 50k archive compatible with the
+[ADM evaluator](https://github.com/openai/guided-diffusion/tree/main/evaluations):
 
 ```bash
-python sample_tokens.py \
-  --config configs/ort_alitok_xl.yaml \
-  --checkpoint outputs/ort_alitok_xl/checkpoint-0187500/pytorch_model.bin \
-  --labels 0 1 2 3 \
-  --output outputs/token_samples.npz
+python sample_images.py --config configs/ort_e_alitok_xl_400.yaml --checkpoint /path/to/ort.bin --tokenizer-weights /path/to/AliTok.pth --seed 2 --count 50000 --output outputs/samples.npz
+python /path/to/guided-diffusion/evaluations/evaluator.py /path/to/VIRTUAL_imagenet256_labeled.npz outputs/samples.npz
 ```
 
-Decode the `tokens` array with the official AliTok decoder, then use the standard
-ADM ImageNet evaluation protocol to compute FID, IS, sFID, precision, and recall.
+Archive generation is serial and uses a temporary disk array; allow about 20 GB
+free disk for a 50k run. Hold seed, batch size, CFG and class ordering fixed when
+comparing checkpoints. No paper metric reproduction is claimed by a smoke test.
 
-## Verification
-
-```bash
-pytest -q
-```
-
-The smoke test instantiates a small CPU model while preserving the 273-token AliTok
-layout, exercises randomized ordinal weighting, computes the weighted loss, runs
-backpropagation, and checks the random-to-raster schedule.
-
-## Anonymity
-
-This package was rebuilt without version-control history. It contains no author
-names, usernames, email addresses, affiliations, machine names, absolute paths,
-experiment dashboards, API keys, or pretrained weights.
-
-## License and attribution
-
-See `LICENSE` and `NOTICE.md`. The implementation retains attribution to the
-upstream open-source projects from which the transformer/RAR components were
-adapted.
+See [validation status](docs/RELEASE_STATUS.md) and [source notes](docs/SOURCE_PROVENANCE.md).
+Inherited licenses and third-party notices are retained; AliTok-specific
+redistribution terms remain unresolved in the inspected upstream source.

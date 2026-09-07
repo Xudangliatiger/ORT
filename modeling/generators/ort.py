@@ -4,17 +4,18 @@
     https://github.com/FoundationVision/LlamaGen/blob/main/autoregressive/models/gpt.py
 """
 
-from functools import partial
-
 from einops import rearrange
 import torch
-import torch._dynamo
 import torch.nn as nn
 import torch.nn.functional as F
-
-from .base_model import BaseModel
-
+import torch._dynamo
+from modeling.modules import BaseModel
+from functools import partial
+import random
+import torch._dynamo
 torch._dynamo.config.suppress_errors = True
+
+from utils.registry import register_model
 
 
 #################################################################################
@@ -215,6 +216,7 @@ class Block(nn.Module):
         x = x + self.mlp(self.norm2(x))
         return x
 
+@register_model("ort")
 class ORTModel(BaseModel):
     def __init__(self, config, logger=None):
         super().__init__()
@@ -271,6 +273,7 @@ class ORTModel(BaseModel):
         freqs_cis_globle = precompute_freqs_cis(17, embed_dim // num_heads, 10000, 1)
         freqs_cis = torch.cat([freqs_cis_globle, freqs_cis_img], dim=0)
 
+        # ✅ 用 register_buffer 直接注册，不要先 self.freqs_cis = ...
         self.register_buffer("freqs_cis", freqs_cis, persistent=False)
 
         self.pos_embed = nn.init.trunc_normal_(
@@ -316,6 +319,7 @@ class ORTModel(BaseModel):
     def get_rar_alpha_beta_weight(self, config, cur_step):
         weight_anneal_start = config.model.loss.weight_anneal_start
         weight_anneal_end = config.model.loss.weight_anneal_end
+        max_train_steps = config.training.max_train_steps
         alpha_weight_1 = config.model.loss.alpha_weight_raster_start
         beta_weight_1 = config.model.loss.beta_weight_raster_start
         alpha_weight_2 = config.model.loss.alpha_weight_raster_end
@@ -382,14 +386,14 @@ class ORTModel(BaseModel):
     @torch.compiler.disable
     def shuffle(self, x, orders):
         batch_size, seq_len = x.shape[:2]
-        batch_indices = torch.arange(batch_size, device=x.device).unsqueeze(1).expand(-1, seq_len)
+        batch_indices = torch.arange(batch_size).unsqueeze(1).expand(-1, seq_len)
         shuffled_x = x[batch_indices, orders]
         return shuffled_x
 
     def unshuffle(self, shuffled_x, orders):
         # Unshuffle the tensor based on the original orders
         batch_size, seq_len = shuffled_x.shape[:2]
-        batch_indices = torch.arange(batch_size, device=shuffled_x.device).unsqueeze(1).expand(-1, seq_len)
+        batch_indices = torch.arange(batch_size).unsqueeze(1).expand(-1, seq_len)
         unshuffled_x = torch.zeros_like(shuffled_x)
         unshuffled_x[batch_indices, orders] = shuffled_x
         return unshuffled_x
@@ -501,6 +505,8 @@ class ORTModel(BaseModel):
     def residual(self, v, u, eps=1e-8):
         return v - self.proj(v, u, eps)
 
+    import torch
+
     def guidance_norm(
             self,
             v: torch.Tensor,
@@ -558,7 +564,7 @@ class ORTModel(BaseModel):
             condition, cond_drop_prob=0.0)
         device = condition.device
         num_samples = condition.shape[0]
-        ids = torch.full((num_samples, 0), -1, device=device)
+        ids = torch.full((num_samples, 0), -1, device=device)  # ids是已采样的token在codebook里的值
         cfg_scale = 0.
 
         if kv_cache:

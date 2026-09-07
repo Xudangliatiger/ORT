@@ -77,44 +77,8 @@ class BaseModel(torch.nn.Module):
 
         # Load model state from checkpoint.
         checkpoint = torch.load(model_file, map_location="cpu")
-        if isinstance(checkpoint, dict) and any(key.startswith("_orig_mod.") for key in checkpoint):
-            checkpoint = {
-                key.removeprefix("_orig_mod."): value
-                for key, value in checkpoint.items()
-            }
-        # Load state dictionary into self.  PyTorch's strict=False still errors
-        # on shape mismatches, so filter those out for architecture-expansion
-        # finetunes that intentionally reuse only compatible weights.
-        if not strict_loading:
-            current_state = self.state_dict()
-            filtered_checkpoint = {}
-            skipped_shape = []
-            skipped_missing = []
-            for key, value in checkpoint.items():
-                if key not in current_state:
-                    skipped_missing.append(key)
-                    continue
-                if current_state[key].shape != value.shape:
-                    skipped_shape.append((key, tuple(value.shape), tuple(current_state[key].shape)))
-                    continue
-                filtered_checkpoint[key] = value
-            msg = self.load_state_dict(filtered_checkpoint, strict=False)
-            if skipped_shape:
-                preview = ", ".join(
-                    f"{key}:{old}->{new}" for key, old, new in skipped_shape[:8]
-                )
-                print(
-                    "Skipped pretrained weights with mismatched shapes "
-                    f"({len(skipped_shape)} total): {preview}"
-                )
-            if skipped_missing:
-                preview = ", ".join(skipped_missing[:8])
-                print(
-                    "Skipped pretrained weights missing in current model "
-                    f"({len(skipped_missing)} total): {preview}"
-                )
-        else:
-            msg = self.load_state_dict(checkpoint, strict=strict_loading)
+        # Load state dictionary into self.
+        msg = self.load_state_dict(checkpoint, strict=strict_loading)
         # Print information about loading weights.
         print(f"loading weight from {model_file}, msg: {msg}")
         # If torch_dtype is specified and is a valid torch.dtype, convert self to this dtype.
@@ -151,3 +115,4 @@ class BaseModel(torch.nn.Module):
             return sum(p.numel() for p in non_embedding_parameters if p.requires_grad or not only_trainable)
         else:
             return sum(p.numel() for p in self.parameters() if p.requires_grad or not only_trainable)
+

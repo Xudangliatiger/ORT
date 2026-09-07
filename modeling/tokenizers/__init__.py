@@ -1,0 +1,1 @@
+from .alitok import AliTok

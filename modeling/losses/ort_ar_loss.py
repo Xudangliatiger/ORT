@@ -1,7 +1,8 @@
 from typing import Mapping, Text, Tuple
-
 import torch
+from utils.registry import register_loss
 
+@register_loss("ort_ar_loss")
 class ORTARLoss(torch.nn.Module):
     def __init__(self, config):
         super().__init__()
@@ -10,7 +11,7 @@ class ORTARLoss(torch.nn.Module):
 
     def forward(self, logits: torch.Tensor, labels: torch.Tensor, weight: torch.Tensor, *args) -> Tuple[torch.Tensor, Mapping[Text, torch.Tensor]]:
 
-        logits = logits['x']
+        logits, logits_ = logits['x'], logits['x_']
 
         shift_logits = logits[..., :-1, :].permute(0, 2, 1).contiguous()  # NLC->NCL
         shift_labels = labels.contiguous()
@@ -20,5 +21,11 @@ class ORTARLoss(torch.nn.Module):
         loss = self.criterion(shift_logits, shift_labels)
         loss *= weight if weight is not None else 1
 
+        # shift_logits_ = logits_[..., :-1, :].permute(0, 2, 1).contiguous()  # NLC->NCL
+        # shift_logits_ = shift_logits_.view(shift_logits_.shape[0], self.target_vocab_size, -1)
+        # loss_ = self.criterion(shift_logits_, shift_labels)
+        # loss_ *= weight if weight is not None else 1
+
+        # loss *= 1/weight.mean()
         correct_tokens = (torch.argmax(shift_logits, dim=1) == shift_labels).sum(dim=1) / shift_labels.size(1)
-        return loss.mean(), {"loss_ar": loss.mean(), "correct_tokens": correct_tokens.float().mean()}
+        return loss.mean(), {"loss_ar": loss.mean(), "correct_tokens": correct_tokens.float().mean()} #"loss_mid_level_ar": loss_.mean()

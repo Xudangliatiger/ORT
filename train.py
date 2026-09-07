@@ -3,18 +3,26 @@
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import random
 from pathlib import Path
 
-from accelerate import Accelerator
+from accelerate import Accelerator, DataLoaderConfiguration
+from accelerate.utils import set_seed
 from datasets import load_from_disk
 from omegaconf import OmegaConf
 import torch
 from torch.optim import AdamW
 from torch.utils.data import DataLoader, Dataset
 
-from ort import ORTARLoss, ORTModel
+from modeling.losses import ORTARLoss
+from modeling.generators import ORTModel
+
+def build_model(config):
+    if config.model.generator.type != "ort":
+        raise ValueError("Only the ORT generator is included")
+    return ORTModel(config)
 
 
 class PretokenizedDataset(Dataset):
@@ -41,7 +49,11 @@ def optimizer_for(model: torch.nn.Module, config) -> AdamW:
     params = list(model.named_parameters())
     no_decay = lambda name, value: (
         value.ndim < 2
+        or "ln" in name
         or "bias" in name
+        or "latent_tokens" in name
+        or "mask_token" in name
+        or "gamma" in name
         or "norm" in name
         or "embed" in name
     )
@@ -70,7 +82,7 @@ def cosine_scheduler(optimizer: AdamW, config):
 
     def scale(step: int) -> float:
         if warmup > 0 and step < warmup:
-            return max(step, 1) / warmup
+            return step / warmup
         progress = (step - warmup) / max(total - warmup, 1)
         progress = min(max(progress, 0.0), 1.0)
         return min_ratio + 0.5 * (1.0 - min_ratio) * (1.0 + math.cos(math.pi * progress))
@@ -78,13 +90,18 @@ def cosine_scheduler(optimizer: AdamW, config):
     return torch.optim.lr_scheduler.LambdaLR(optimizer, scale)
 
 
-def save_checkpoint(accelerator: Accelerator, model: torch.nn.Module, output_dir: Path, step: int):
+def save_checkpoint(accelerator, model, output_dir, step, epoch, batch_offset):
     accelerator.wait_for_everyone()
+    checkpoint_dir = output_dir / f"checkpoint-{step:07d}"
+    accelerator.save_state(str(checkpoint_dir))
+    state = accelerator.get_state_dict(model)
     if accelerator.is_main_process:
-        checkpoint_dir = output_dir / f"checkpoint-{step:07d}"
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
-        state = accelerator.get_state_dict(model)
         accelerator.save(state, checkpoint_dir / "pytorch_model.bin")
+        (checkpoint_dir / "progress.json").write_text(json.dumps({
+            "step": step, "epoch": epoch, "batch_offset": batch_offset,
+            "world_size": accelerator.num_processes,
+        }))
 
 
 def parse_args() -> argparse.Namespace:
@@ -92,7 +109,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--config", default="configs/ort_alitok_xl.yaml")
     parser.add_argument("--dataset", help="Override dataset.params.pretokenization")
     parser.add_argument("--output", help="Override experiment.output_dir")
-    parser.add_argument("--max-steps", type=int)
+    parser.add_argument("--stop-after", type=int, help="Stop at this optimizer update without changing the recipe/scheduler horizon")
+    parser.add_argument("--resume", help="Full checkpoint directory; same recipe and world size required")
     return parser.parse_args()
 
 
@@ -103,17 +121,34 @@ def main() -> None:
         config.dataset.params.pretokenization = args.dataset
     if args.output:
         config.experiment.output_dir = args.output
-    if args.max_steps:
-        config.training.max_train_steps = args.max_steps
+    stop_at = int(config.training.max_train_steps)
+    if args.stop_after is not None:
+        if not 0 < args.stop_after <= stop_at:
+            raise ValueError("--stop-after must be within the configured training horizon")
+        stop_at = args.stop_after
+    if config.training.get("use_ema", False) or config.training.get("torch_compile", False):
+        raise ValueError("This trainer does not implement EMA or torch_compile")
+    torch.backends.cuda.matmul.allow_tf32 = bool(config.training.get("enable_tf32", False))
 
     accelerator = Accelerator(
         gradient_accumulation_steps=config.training.gradient_accumulation_steps,
         mixed_precision=config.training.mixed_precision,
+        step_scheduler_with_optimizer=False,
+        dataloader_config=DataLoaderConfiguration(use_seedable_sampler=True, data_seed=int(config.training.seed)),
     )
-    torch.manual_seed(int(config.training.seed) + accelerator.process_index)
-    random.seed(int(config.training.seed) + accelerator.process_index)
+    set_seed(int(config.training.seed))
+    expected = config.training.get("global_batch_size", 2048)
+    actual = accelerator.num_processes * config.training.per_gpu_batch_size * config.training.gradient_accumulation_steps
+    if actual != expected:
+        raise ValueError(f"Global batch {actual} differs from recipe {expected}; adjust per-device batch/accumulation")
 
     output_dir = Path(config.experiment.output_dir)
+    if args.resume:
+        previous = OmegaConf.load(Path(args.resume).parent / "config.yaml")
+        if OmegaConf.to_container(previous, resolve=True) != OmegaConf.to_container(config, resolve=True):
+            raise ValueError("Resume config differs from recorded config; use the same recipe")
+    elif output_dir.exists() and any(output_dir.iterdir()):
+        raise ValueError("Output directory is nonempty; select a fresh run directory or use --resume")
     if accelerator.is_main_process:
         output_dir.mkdir(parents=True, exist_ok=True)
         OmegaConf.save(config, output_dir / "config.yaml")
@@ -126,20 +161,37 @@ def main() -> None:
         drop_last=True,
         num_workers=config.dataset.params.num_workers_per_gpu,
         pin_memory=True,
+        generator=torch.Generator().manual_seed(int(config.training.seed)),
     )
 
-    model = ORTModel(config)
+    model = build_model(config)
     loss_module = ORTARLoss(config)
     optimizer = optimizer_for(model, config)
     scheduler = cosine_scheduler(optimizer, config)
-    model, optimizer, dataloader, scheduler = accelerator.prepare(
-        model, optimizer, dataloader, scheduler
+    model, optimizer, dataloader = accelerator.prepare(
+        model, optimizer, dataloader
     )
+    accelerator.register_for_checkpointing(scheduler)
+    set_seed(int(config.training.seed), device_specific=True)
 
     step = 0
-    while step < config.training.max_train_steps:
-        for batch in dataloader:
-            if step >= config.training.max_train_steps:
+    epoch = 0
+    batch_offset = 0
+    if args.resume:
+        accelerator.load_state(args.resume)
+        progress = json.loads((Path(args.resume) / "progress.json").read_text())
+        step, epoch, batch_offset = progress["step"], progress["epoch"], progress["batch_offset"]
+    if args.resume and progress.get("world_size") != accelerator.num_processes:
+        raise ValueError("Checkpoint world size differs or is missing")
+    if len(dataloader) % int(config.training.gradient_accumulation_steps):
+        raise ValueError("Distributed epoch batches must be divisible by accumulation steps; partial updates would change global batch")
+    if not len(dataloader):
+        raise ValueError("Dataset does not contain one complete distributed batch")
+    while step < stop_at:
+        dataloader.set_epoch(epoch)
+        active_loader = accelerator.skip_first_batches(dataloader, batch_offset)
+        for batch in active_loader:
+            if step >= stop_at:
                 break
 
             unwrapped = accelerator.unwrap_model(model)
@@ -158,20 +210,27 @@ def main() -> None:
                 if accelerator.sync_gradients:
                     accelerator.clip_grad_norm_(model.parameters(), config.training.max_grad_norm)
                 optimizer.step()
-                scheduler.step()
+                if accelerator.sync_gradients and not accelerator.optimizer_step_was_skipped:
+                    scheduler.step()
                 optimizer.zero_grad(set_to_none=True)
 
+            batch_offset += 1
+            if not accelerator.sync_gradients or accelerator.optimizer_step_was_skipped:
+                continue
             step += 1
-            if accelerator.is_main_process and step % config.experiment.log_every == 0:
+            if step % config.experiment.log_every == 0:
                 accuracy = accelerator.gather(metrics["correct_tokens"].detach()).mean().item()
-                print(
+                accelerator.print(
                     f"step={step} loss={loss.detach().item():.5f} "
                     f"token_accuracy={accuracy:.5f} random_ratio={unwrapped.random_ratio:.4f}"
                 )
             if step % config.experiment.save_every == 0:
-                save_checkpoint(accelerator, model, output_dir, step)
+                save_checkpoint(accelerator, model, output_dir, step, epoch, batch_offset)
+        if batch_offset >= len(dataloader):
+            epoch += 1
+            batch_offset = 0
 
-    save_checkpoint(accelerator, model, output_dir, step)
+    save_checkpoint(accelerator, model, output_dir, step, epoch, batch_offset)
 
 
 if __name__ == "__main__":

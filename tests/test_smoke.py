@@ -1,7 +1,8 @@
 from omegaconf import OmegaConf
 import torch
 
-from ort import ORTARLoss, ORTModel
+from modeling.losses import ORTARLoss
+from modeling.generators import ORTModel
 
 
 def tiny_config():
@@ -66,3 +67,5 @@ def test_randomness_schedule():
     assert model.get_rar_random_ratio(config, 0) == 1.0
     assert model.get_rar_random_ratio(config, 15) == 0.5
     assert model.get_rar_random_ratio(config, 20) == 0.0
+
+

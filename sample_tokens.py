@@ -9,7 +9,13 @@ import numpy as np
 from omegaconf import OmegaConf
 import torch
 
-from ort import ORTModel
+from modeling.generators import ORTModel
+from modeling.generators import ORTModel
+
+def build_model(config):
+    if config.model.generator.type != "ort":
+        raise ValueError("Only the ORT generator is included")
+    return ORTModel(config)
 
 
 def parse_args() -> argparse.Namespace:
@@ -29,7 +35,7 @@ def main() -> None:
     device = torch.device(args.device)
     torch.manual_seed(args.seed)
 
-    model = ORTModel(config)
+    model = build_model(config)
     state = torch.load(args.checkpoint, map_location="cpu", weights_only=True)
     if isinstance(state, dict) and "model" in state:
         state = state["model"]
@@ -43,7 +49,8 @@ def main() -> None:
         guidance_scale=config.model.generator.guidance_scale,
         guidance_scale_pow=config.model.generator.guidance_scale_pow,
         randomize_temperature=config.model.generator.randomize_temperature,
-        internal_guidance_scale=config.model.generator.internal_guidance_scale,
+        **({"internal_guidance_scale": config.model.generator.internal_guidance_scale}
+           if config.model.generator.type == "ort" else {}),
     )
 
     output = Path(args.output)
