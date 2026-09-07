@@ -51,7 +51,7 @@ full-state resume, image sampling, and the original AliTok and RAR generators.
 | Method | Training order | Image tokens | Vocabulary | Example recipe |
 |---|---|---:|---:|---|
 | **ORT-E / AliTok-XL** | Random → raster, early-biased loss | 273 | 4096 | [400 epochs](configs/ort_e_alitok_xl_400.yaml) |
-| **ORT-L / AliTok-XL** | Random → raster, late-biased loss | 273 | 4096 | [300 epochs](configs/ort_alitok_xl.yaml) |
+| **ORT-L / AliTok-XL** | Random → raster, late-biased loss | 273 | 4096 | [300 epochs](configs/ort_l_alitok_xl_300.yaml) |
 | Original AliTok-XL | Raster, uniform loss | 273 | 4096 | [400 epochs](configs/alitok_xl_original_400.yaml) |
 | Original RAR-XL | Random → raster, uniform loss | 256 | 1024 | [400 epochs](configs/rar_xl_original_400.yaml) |
 
@@ -146,6 +146,23 @@ python sample_tokens.py \
   --config configs/rar_xl_original_400.yaml \
   --checkpoint weights/rar_xl.bin \
   --seed 2 --labels 1 7 --output outputs/rar_tokens.npz
+```
+
+## Dataset preparation
+
+Prepare ImageNet-1K tokens with the matching tokenizer: **MaskGIT for RAR**,
+**AliTok for AliTok-based models**. The trainer reads a Hugging Face dataset
+saved to disk; it does not directly read images or JSONL.
+
+Download **[AliTok pretokenized data](https://huggingface.co/datasets/donglixu/ORT-ImageNet-AliTok)**
+or **[official RAR tokens](https://huggingface.co/yucornetto/RAR/blob/main/maskgitvq.jsonl)**.
+See **[Dataset preparation](docs/DATASET.md)** for image encoding requirements,
+JSONL conversion, crop preservation, class labels and full-record validation.
+
+```bash
+python scripts/prepare_dataset.py --jsonl /path/to/maskgit_tokens.jsonl \
+  --tokenizer maskgit --expected-count 1281167 \
+  --output data/imagenet_maskgit_train
 ```
 
 ## Training

@@ -49,7 +49,7 @@ def main():
                 guidance_scale=c.model.generator.guidance_scale,
                 guidance_scale_pow=c.model.generator.guidance_scale_pow,
                 randomize_temperature=c.model.generator.randomize_temperature,
-                **({'internal_guidance_scale': c.model.generator.internal_guidance_scale} if c.model.generator.type == 'ort' else {}))
+                **({'internal_guidance_scale': c.model.generator.get("internal_guidance_scale", 1)} if c.model.generator.type == 'ort' else {}))
             batch = decoder.decode_tokens(tokens.reshape(tokens.shape[0], -1)).clamp(0, 1)
             batch = (batch * 255).permute(0, 2, 3, 1).to('cpu', torch.uint8).numpy()
             if batch.shape[1:] != (256, 256, 3):

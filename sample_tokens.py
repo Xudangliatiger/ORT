@@ -14,7 +14,7 @@ from modeling.factory import build_model, training_outputs, configure_order, bui
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="configs/ort_alitok_xl.yaml")
+    parser.add_argument("--config", default="configs/ort_l_alitok_xl_300.yaml")
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--output", default="ort_token_samples.npz")
     parser.add_argument("--labels", type=int, nargs="+", default=[0, 1, 2, 3])
@@ -43,7 +43,7 @@ def main() -> None:
         guidance_scale=config.model.generator.guidance_scale,
         guidance_scale_pow=config.model.generator.guidance_scale_pow,
         randomize_temperature=config.model.generator.randomize_temperature,
-        **({"internal_guidance_scale": config.model.generator.internal_guidance_scale}
+        **({"internal_guidance_scale": config.model.generator.get("internal_guidance_scale", 1)}
            if config.model.generator.type == "ort" else {}),
     )
 

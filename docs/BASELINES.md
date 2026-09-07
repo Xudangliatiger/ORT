@@ -36,3 +36,37 @@ Original generator CPU forward/backward and complete token generation tests pass
 Two-GPU GH200 synthetic train/resume/token-generation checks also pass for both.
 Official pretrained-baseline weights and full-image metrics have not been tested
 in this extraction. Third-party licensing notes remain in NOTICE.md.
+
+## RAR with ORT
+
+`rar_ort` subclasses original RAR, preserving parameter names and shapes. RAR
+already supports random permutations and target-aware position embeddings. The
+adapter adds ordinal loss weights and the shared ORT curriculum; raster inference
+remains original RAR. Weights follow generation position, not spatial token ID.
+Loss is `mean(weight * token_cross_entropy)`, without weight renormalization.
+Random examples use `(alpha, beta)`; raster examples use `(1, 1)`, including in the
+mixed-order phase. Both variants use MaskGIT (256 tokens, vocabulary 1024).
+
+| Recipe | Total updates | Order annealing updates | Random loss endpoints |
+|---|---:|---|---|
+| `configs/rar_xl_original_300.yaml` | 187500 | 62500–125000 | uniform |
+| `configs/ort_l_rar_xl_400.yaml` (ORT-L) | 250000 | 125000–187500 | 0.75, 1.25 |
+| `configs/ort_e_rar_xl_400.yaml` (ORT-E) | 250000 | 125000–187500 | 1, 0 |
+
+The two primary recipes are baseline 300 and ORT 400. The E variant changes only
+alpha/beta and experiment/output names so both runs can coexist. Epoch labels
+follow the historical convention of 625 optimizer updates per epoch with global
+batch 2048. These are new experiments, not verified reconstructions of missing
+historical checkpoints. CFG 16 / power 2.75 is inherited from the existing RAR
+recipe and is not established as optimal for XL.
+
+Set `--dataset` to an HF dataset directory with MaskGIT token IDs and labels. The
+portable trainer does not directly read historical JSONL. Tokenizer weights are
+needed for image decoding, not pretokenized training. YAML holds recipe settings;
+cluster scripts must separately configure resources, environments, ranks,
+rendezvous and caches. Short launch examples are not multi-node Slurm scripts.
+
+CPU tests verify strict state-dict interchange with original RAR, equal logits
+under identical orders, L/E weighted loss, raster uniform loss, backward, full
+256-token generation and MaskGIT dispatch. The new adapter also passed two-GPU GH200 tiny-model training/resume and token
+generation. Full-size 32-GPU training and full ImageNet evaluation remain unverified.

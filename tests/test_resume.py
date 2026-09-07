@@ -12,7 +12,7 @@ import torch
 def test_resume_matches_uninterrupted(tmp_path):
     root = Path(__file__).resolve().parents[1]
     Dataset.from_dict({'label': [i % 10 for i in range(16)], 'tokens': [[i % 32] * 273 for i in range(16)]}).save_to_disk(str(tmp_path / 'data'))
-    c = OmegaConf.load(root / 'configs/ort_alitok_xl.yaml')
+    c = OmegaConf.load(root / 'configs/ort_l_alitok_xl_300.yaml')
     for k, v in dict(hidden_size=32, num_hidden_layers=1, num_attention_heads=4, intermediate_size=128, image_seq_len=273, condition_num_classes=10).items():
         c.model.generator[k] = v
     c.model.vq_model.codebook_size = 32

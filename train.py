@@ -101,7 +101,7 @@ def save_checkpoint(accelerator, model, output_dir, step, epoch, batch_offset):
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="configs/ort_alitok_xl.yaml")
+    parser.add_argument("--config", default="configs/ort_l_alitok_xl_300.yaml")
     parser.add_argument("--dataset", help="Override dataset.params.pretokenization")
     parser.add_argument("--output", help="Override experiment.output_dir")
     parser.add_argument("--stop-after", type=int, help="Stop at this optimizer update without changing the recipe/scheduler horizon")

@@ -7,7 +7,7 @@ from omegaconf import OmegaConf
 p = argparse.ArgumentParser()
 p.add_argument('--output', required=True)
 p.add_argument('--world-size', type=int, default=2)
-p.add_argument('--base-config', default='configs/ort_alitok_xl.yaml')
+p.add_argument('--base-config', default='configs/ort_l_alitok_xl_300.yaml')
 a = p.parse_args()
 r = Path(a.output).resolve()
 r.mkdir(parents=True, exist_ok=True)

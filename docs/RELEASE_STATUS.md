@@ -23,3 +23,10 @@ Multiworker crop RNG equivalence across resume is not guaranteed.
 AliTok-specific redistribution terms remain unresolved in inspected upstream
 revision 15410babdf944c957dcde96cc6d09e246bad9c3e; inherited notices alone do not
 establish permission for those adaptations.
+
+New RAR ORT-L/ORT-E adapters and the RAR baseline passed two-GPU GH200 tiny-model
+training (2 updates), full-state resume (4 updates), strict checkpoint loading
+and 256-token generation in a combined 142-second job. These use synthetic tokens.
+The new trainer also passed a CPU train/resume check on 16 real AliTok token
+records with the full 4096 vocabulary and original scheduler horizon retained.
+Neither check establishes full-size 32-GPU training or paper FID reproduction.
