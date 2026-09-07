@@ -1,0 +1,79 @@
+experiment:
+  name: alitok-xl-baseline-400
+  max_train_examples: 1281167
+  save_every: 10000
+  eval_every: 50000
+  generate_every: 5000
+  log_every: 100
+  log_grad_norm_every: 100
+  resume: true
+  output_dir: outputs/alitok-xl-baseline-400
+model:
+  vq_model:
+    codebook_size: 4096
+    token_size: 32
+    num_latent_tokens: 273
+  generator:
+    type: ort
+    hidden_size: 1280
+    num_hidden_layers: 32
+    num_attention_heads: 16
+    dropout: 0.1
+    attn_drop: 0.1
+    tok_dropout: 0.1
+    class_label_dropout: 0.1
+    image_seq_len: 273
+    condition_num_classes: 1000
+    randomize_temperature: 1.0
+    guidance_scale: 15.5
+    guidance_scale_pow: 2.5
+    use_checkpoint: false
+    seed: 2
+    randomness_anneal_start: 125000
+    randomness_anneal_end: 187500
+  loss:
+    type: ort_ar_loss
+    alpha_weight_random: 1
+    beta_weight_random: 1
+    alpha_weight_raster_start: 1
+    beta_weight_raster_start: 1
+    alpha_weight_raster_end: 1
+    beta_weight_raster_end: 1
+    weight_anneal_start: 0
+    weight_anneal_end: 0
+  tokenizer:
+    type: alitok
+    weight_path: ''
+dataset:
+  params:
+    pretokenization: path/to/pretokenized_imagenet
+    num_workers_per_gpu: 4
+  preprocessing:
+    resize_shorter_edge: 256
+    crop_size: 256
+    random_crop: false
+    random_flip: true
+optimizer:
+  name: adamw
+  params:
+    learning_rate: 0.0004
+    beta1: 0.9
+    beta2: 0.96
+    weight_decay: 0.03
+lr_scheduler:
+  scheduler: cosine
+  params:
+    learning_rate: ${optimizer.params.learning_rate}
+    warmup_steps: 62500
+    end_lr: 1.0e-05
+training:
+  gradient_accumulation_steps: 1
+  per_gpu_batch_size: 64
+  mixed_precision: bf16
+  enable_tf32: true
+  use_ema: false
+  seed: 42
+  max_train_steps: 250000
+  max_grad_norm: 1.0
+  torch_compile: false
+  global_batch_size: 2048
