@@ -75,7 +75,7 @@ ImageNet-256 results, grouped by training budget. **Official** links point to up
 | Model | Epochs | Pretraining | Source | FID ↓ (reported) | Checkpoint | Recipe |
 |---|---:|---|---|---:|---|---|
 | RAR-B baseline | 300 | Random | Ours, paper ablation | 2.04 | Not released | — |
-| AliTok-XL\* | 300 | Random | Ours | 1.42 | Not released | — |
+| AliTok-XL\* | 300 | Random | Ours | 1.42 | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/alitok-xl-baseline-300.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/alitok-xl-baseline-300.yaml) |
 | AliTok-XL\* + ORT-L | 300 | Random | Ours | 1.34 | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-l-alitok-xl-300.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-l-alitok-xl-300.yaml) |
 | AliTok-XL\* + ORT-E | 300 | Random | Ours | **1.26** | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-e-alitok-xl-300.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-e-alitok-xl-300.yaml) |
 
@@ -87,7 +87,7 @@ ImageNet-256 results, grouped by training budget. **Official** links point to up
 | RAR-L baseline | 400 | Random | Official | 1.70 | [Weights](https://huggingface.co/yucornetto/RAR/blob/main/rar_l.bin) | [Upstream](https://github.com/bytedance/1d-tokenizer/blob/main/README_RAR.md) |
 | RAR-XL baseline | 400 | Random | Official | 1.50 | [Weights](https://huggingface.co/yucornetto/RAR/blob/main/rar_xl.bin) | [Config](configs/rar_xl_original_400.yaml) |
 | AliTok-XL baseline | 400 | Raster | Official | 1.35 | [Weights](https://github.com/ali-vilab/alitok#-usage) | [Config](configs/alitok_xl_original_400.yaml) |
-| AliTok-XL\* | 400 | Random | Ours | 1.35 | Not released | — |
+| AliTok-XL\* | 400 | Random | Ours | 1.35 | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/alitok-xl-baseline-400.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/alitok-xl-baseline-400.yaml) |
 | AliTok-XL\* + ORT-L | 400 | Random | Ours | 1.31 | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-l-alitok-xl-400.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-l-alitok-xl-400.yaml) |
 | AliTok-XL\* + ORT-E | 400 | Random | Ours | **1.18** | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-e-alitok-xl-400.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-e-alitok-xl-400.yaml) |
 
