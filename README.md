@@ -68,16 +68,34 @@ not a byte-identical replacement for each complete upstream training system.
 
 ## Checkpoints
 
-| Model | Epochs | FID ↓ (paper) | Download | Recipe |
-|---|---:|---:|---|---|
-| ORT-E / AliTok-XL | 400 | **1.18** | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-e-alitok-xl-400.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-e-alitok-xl-400.yaml) |
-| ORT-E / AliTok-XL | 300 | **1.26** | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-e-alitok-xl-300.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-e-alitok-xl-300.yaml) |
-| ORT-L / AliTok-XL | 300 | **1.34** | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-l-alitok-xl-300.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-l-alitok-xl-300.yaml) |
-| ORT-L / AliTok-XL | 400 | **1.31** | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-l-alitok-xl-400.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-l-alitok-xl-400.yaml) |
+ImageNet-256 results, grouped by training budget. **Official** links point to upstream weights; **ours** denotes our paper's experiments. “Not released” means no matching checkpoint is available in this release.
 
-FID values are paper-reported on ImageNet 256×256 (current manuscript, Tables 2 and 7). These rows correspond to the authors’ AliTok*-XL recipes. The released checkpoint-to-result mapping has not been independently verified by a new 50k-image evaluation. Exact per-row evaluation CFG and sampling seed remain unverified; config defaults and the example seed are not a claim to reproduce these FIDs.
+### 300 epochs
 
-Each generator file is 2.66 GB. See [download instructions and hashes](docs/MODELS.md).
+| Model | Source | FID ↓ (reported) | Checkpoint | Recipe |
+|---|---|---:|---|---|
+| RAR-B baseline | Ours, paper ablation | 2.04 | Not released | — |
+| RAR + AliTok-XL baseline | Ours (AliTok*-XL) | 1.42 | Not released | — |
+| ORT-L / AliTok-XL | Ours | 1.34 | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-l-alitok-xl-300.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-l-alitok-xl-300.yaml) |
+| ORT-E / AliTok-XL | Ours | **1.26** | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-e-alitok-xl-300.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-e-alitok-xl-300.yaml) |
+
+### 400 epochs
+
+| Model | Source | FID ↓ (reported) | Checkpoint | Recipe |
+|---|---|---:|---|---|
+| RAR-B baseline | Official | 1.95 | [Weights](https://huggingface.co/yucornetto/RAR/blob/main/rar_b.bin) | [Upstream](https://github.com/bytedance/1d-tokenizer/blob/main/README_RAR.md) |
+| RAR-L baseline | Official | 1.70 | [Weights](https://huggingface.co/yucornetto/RAR/blob/main/rar_l.bin) | [Upstream](https://github.com/bytedance/1d-tokenizer/blob/main/README_RAR.md) |
+| RAR-XL baseline | Official | 1.50 | [Weights](https://huggingface.co/yucornetto/RAR/blob/main/rar_xl.bin) | [Config](configs/rar_xl_original_400.yaml) |
+| AliTok-XL baseline (raster order) | Official | 1.35 | [Weights](https://github.com/ali-vilab/alitok#-usage) | [Config](configs/alitok_xl_original_400.yaml) |
+| RAR + AliTok-XL baseline | Ours (AliTok*-XL) | 1.35 | Not released | — |
+| ORT-L / AliTok-XL | Ours | 1.31 | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-l-alitok-xl-400.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-l-alitok-xl-400.yaml) |
+| ORT-E / AliTok-XL | Ours | **1.18** | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-e-alitok-xl-400.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-e-alitok-xl-400.yaml) |
+
+**Baseline identity.** AliTok*-XL in our paper means our implementation using the RAR-like randomized training recipe; it is distinct from the official raster-order AliTok generator. Its baseline FIDs are 1.42 / 1.35 at 300 / 400 epochs. The official RAR-XL download reports 1.50; our paper's RAR-XL reproduction reports 1.51, and its matching checkpoint is not released here. RAR uses the MaskGIT tokenizer; AliTok models use the AliTok tokenizer. See [baseline setup](docs/BASELINES.md).
+
+**Metric sources.** Official results come from the [RAR model zoo](https://github.com/bytedance/1d-tokenizer/blob/main/README_RAR.md#model-zoo) and [AliTok model table](https://github.com/ali-vilab/alitok#-usage); our results are paper-reported (main comparison, AliTok comparison and full-training ablation). These are not new evaluations of the linked files. Exact per-row evaluation CFG and sampling seed for our runs remain unverified.
+
+Each released ORT / AliTok-XL generator file is 2.66 GB. See [download instructions and hashes](docs/MODELS.md).
 
 ## Installation
 
