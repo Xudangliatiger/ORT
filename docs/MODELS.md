@@ -1,34 +1,46 @@
 # Models and downloads
 
-The [ORT Hugging Face model repository](https://huggingface.co/donglixu/ORT) is public.
-The ORT-E 400 file has been uploaded and its remote SHA-256 matches the original.
+| Model | Epochs | FID ↓ (paper) | Download | Recipe |
+|---|---:|---:|---|---|
+| ORT-E / AliTok-XL | 400 | **1.18** | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-e-alitok-xl-400.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-e-alitok-xl-400.yaml) |
+| ORT-E / AliTok-XL | 300 | **1.26** | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-e-alitok-xl-300.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-e-alitok-xl-300.yaml) |
+| ORT-L / AliTok-XL | 300 | **1.34** | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-l-alitok-xl-300.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-l-alitok-xl-300.yaml) |
+| ORT-L / AliTok-XL | 400 | **1.31** | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-l-alitok-xl-400.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-l-alitok-xl-400.yaml) |
+
+FID values are paper-reported on ImageNet 256×256 (current manuscript, Tables 2 and 7). These rows correspond to the authors’ AliTok*-XL recipes. The released checkpoint-to-result mapping has not been independently verified by a new 50k-image evaluation. Exact per-row evaluation CFG and sampling seed remain unverified; config defaults and the example seed are not a claim to reproduce these FIDs.
+
+## Download
+
+Choose one of the four model IDs below; the helper downloads its matching config and verifies SHA-256.
 
 ```bash
 python scripts/download_models.py --model ort-e-alitok-xl-400 --output weights
-# Equivalent Hub CLI download:
+python scripts/download_models.py --model ort-e-alitok-xl-300 --output weights
+python scripts/download_models.py --model ort-l-alitok-xl-300 --output weights
+python scripts/download_models.py --model ort-l-alitok-xl-400 --output weights
+```
+
+For a single model with the Hub CLI:
+
+```bash
 hf download donglixu/ORT ort-e-alitok-xl-400.bin configs/ort-e-alitok-xl-400.yaml --local-dir weights
 ```
 
-[Direct checkpoint download](https://huggingface.co/donglixu/ORT/resolve/main/ort-e-alitok-xl-400.bin) · [Matching recipe](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-e-alitok-xl-400.yaml)
+All files are final generator state dictionaries (2,661,983,138 bytes each); optimizer states are excluded. Training seed is 42. The 300- and 400-epoch recipes use 187,500 and 250,000 updates respectively.
 
-| Checkpoint | Epochs | Random-phase weights (alpha, beta) | State |
-|---|---:|---|---|
-| ORT-E / AliTok-XL | 400 | (1, 0) | Available on Hub; strict load, image decode and backward verified |
-| Historical file labeled ORT-L 400 | Conflicting metadata | Saved config says ORT-E 300 | Not released; directory/config mismatch |
-| ORT-E / AliTok-XL | 300 | (1, 0) | Final checkpoint found; upload pending |
-| ORT-L / AliTok-XL | 300 | (0.75, 1.25) | Final checkpoint found; upload pending |
-| Historical 400-epoch run | 400 | (0.5, 1) | Final checkpoint found; not released |
-| ORT-E IG extension | 300 | (1, 0) | Different parameter layout; archival only, standard loader unsupported |
+## Integrity and recipe provenance
 
-Release only final generator state dictionaries with sanitized recipe configs and
-SHA-256 hashes. Intermediate optimizer checkpoints are not inference downloads.
-Tokenizer weights are obtained from upstream rather than re-hosted without clear
-redistribution terms. See [baseline downloads](BASELINES.md).
+The machine-readable [manifest](../configs/pretrained.json) records SHA-256, size and matching config for every file.
 
-Verified ORT-E 400 checkpoint SHA-256:
-`9fec7c815728ab9bec5f41c39151c4da6786d1f7ed4eb916f98a555c7b0d1094`.
+- `ort-e-alitok-xl-400.bin`: `9fec7c815728ab9bec5f41c39151c4da6786d1f7ed4eb916f98a555c7b0d1094`
+- `ort-e-alitok-xl-300.bin`: `4a99f02de89bd35ca4629a3df61a6f85484a1bd9139e5ac3512a7136fba1dc3c`
+- `ort-l-alitok-xl-300.bin`: `ddfc6561d9c344ea0ff9415cfb48c433715a0db0d152aa50ae3fea72f7f38c34`
+- `ort-l-alitok-xl-400.bin`: `3fba113df943ed8dd21cb1d1b2ddaa4d061356285378ddb908f5f9196c83ba37`
 
-Expected AliTok tokenizer SHA-256 for the validated inference:
-`154843c6ee4bdb9c04ba6db0a51cf68fc18f41f1bc28097e23f76d1aee4ef6a6`.
+ORT-L 400’s standalone saved config was stale. Its released portable recipe was reconstructed from the training log: alpha=0.75, beta=1.25, 250,000 updates, random-order annealing from 125,000 to 187,500. Every tensor in the released final state dictionary matches the final step-250000 checkpoint after normalizing compilation prefixes. Portable configs disable compilation and use placeholder paths.
 
-The current tests validate execution and compatibility, not published FID/IS.
+## Tokenizer and execution checks
+
+Obtain the matching AliTok tokenizer from the [official project](https://github.com/ali-vilab/alitok#-usage). Expected tokenizer SHA-256 for the validated inference is `154843c6ee4bdb9c04ba6db0a51cf68fc18f41f1bc28097e23f76d1aee4ef6a6`. See [original baseline downloads](BASELINES.md).
+
+ORT-E 400 passed strict loading, 273-token generation, 256×256 RGB decoding and a full-model optimizer update on GH200. Other released files have source-to-Hub hash verification; that does not imply each has passed GPU inference or reproduced its paper FID.

@@ -46,7 +46,20 @@ not a byte-identical replacement for each complete upstream training system.
 - **2026-09-07:** Original AliTok and RAR baselines added with CPU regression tests.
 - **2026-09-07:** ORT-E XL historical checkpoint passed strict loading, image decode,
   full backward and an optimizer update on GH200. Two-GPU train/resume also passed.
-- **Model release:** [ORT-E XL 400 checkpoint](https://huggingface.co/donglixu/ORT) is available with a verified SHA-256 and sanitized config. Additional models are being reviewed.
+- **Model release:** Four final ORT-E / ORT-L checkpoints (300 and 400 epochs), matching configs and SHA-256 manifests are available on [Hugging Face](https://huggingface.co/donglixu/ORT).
+
+## Checkpoints
+
+| Model | Epochs | FID ↓ (paper) | Download | Recipe |
+|---|---:|---:|---|---|
+| ORT-E / AliTok-XL | 400 | **1.18** | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-e-alitok-xl-400.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-e-alitok-xl-400.yaml) |
+| ORT-E / AliTok-XL | 300 | **1.26** | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-e-alitok-xl-300.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-e-alitok-xl-300.yaml) |
+| ORT-L / AliTok-XL | 300 | **1.34** | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-l-alitok-xl-300.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-l-alitok-xl-300.yaml) |
+| ORT-L / AliTok-XL | 400 | **1.31** | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-l-alitok-xl-400.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-l-alitok-xl-400.yaml) |
+
+FID values are paper-reported on ImageNet 256×256 (current manuscript, Tables 2 and 7). These rows correspond to the authors’ AliTok*-XL recipes. The released checkpoint-to-result mapping has not been independently verified by a new 50k-image evaluation. Exact per-row evaluation CFG and sampling seed remain unverified; config defaults and the example seed are not a claim to reproduce these FIDs.
+
+Each generator file is 2.66 GB. See [download instructions and hashes](docs/MODELS.md).
 
 ## Installation
 

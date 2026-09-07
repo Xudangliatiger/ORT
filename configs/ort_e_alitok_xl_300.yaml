@@ -1,7 +1,5 @@
 experiment:
-  name: ort_e_alitok_xl_400
-  output_dir: outputs/ort-e-alitok-xl-400
-  generator_checkpoint: ''
+  name: ort_e_alitok_xl_300
   max_train_examples: 1281167
   save_every: 10000
   eval_every: 50000
@@ -9,10 +7,8 @@ experiment:
   log_every: 100
   log_grad_norm_every: 100
   resume: true
+  output_dir: outputs/ort-e-alitok-xl-300
 model:
-  tokenizer:
-    type: alitok
-    weight_path: ''
   vq_model:
     codebook_size: 4096
     token_size: 32
@@ -29,16 +25,12 @@ model:
     image_seq_len: 273
     condition_num_classes: 1000
     randomize_temperature: 1.0
-    guidance_scale: 10
+    guidance_scale: 15.5
     guidance_scale_pow: 2.5
-    use_soft_cfg: false
-    internal_guidance_scale: 2
-    softcfg_strength: -1
-    step_norm: false
     use_checkpoint: false
     seed: 2
-    randomness_anneal_start: 125000
-    randomness_anneal_end: 187500
+    randomness_anneal_start: 62500
+    randomness_anneal_end: 125000
   loss:
     type: ort_ar_loss
     alpha_weight_random: 1
@@ -49,9 +41,12 @@ model:
     beta_weight_raster_end: 1
     weight_anneal_start: 0
     weight_anneal_end: 0
+  tokenizer:
+    type: alitok
+    weight_path: ''
 dataset:
   params:
-    pretokenization: path/to/pretokenized_imagenet
+    pretokenization: /path/to/pretokenized_dataset
     num_workers_per_gpu: 4
   preprocessing:
     resize_shorter_edge: 256
@@ -78,7 +73,7 @@ training:
   enable_tf32: true
   use_ema: false
   seed: 42
-  max_train_steps: 250000
+  max_train_steps: 187500
   max_grad_norm: 1.0
   torch_compile: false
   global_batch_size: 2048

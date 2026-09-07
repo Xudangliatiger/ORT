@@ -1,6 +1,6 @@
 experiment:
-  name: ort_e_alitok_xl_400
-  output_dir: outputs/ort-e-alitok-xl-400
+  name: ort_l_alitok_xl_400
+  output_dir: outputs/ort-l-alitok-xl-400
   generator_checkpoint: ''
   max_train_examples: 1281167
   save_every: 10000
@@ -41,8 +41,8 @@ model:
     randomness_anneal_end: 187500
   loss:
     type: ort_ar_loss
-    alpha_weight_random: 1
-    beta_weight_random: 0
+    alpha_weight_random: 0.75
+    beta_weight_random: 1.25
     alpha_weight_raster_start: 1
     beta_weight_raster_start: 1
     alpha_weight_raster_end: 1

@@ -6,7 +6,48 @@
       "config": "configs/ort-e-alitok-xl-400.yaml",
       "sha256": "9fec7c815728ab9bec5f41c39151c4da6786d1f7ed4eb916f98a555c7b0d1094",
       "size": 2661983138,
-      "standard_loader_supported": true
+      "standard_loader_supported": true,
+      "epochs": 400,
+      "training_steps": 250000,
+      "training_seed": 42,
+      "paper_fid": 1.18,
+      "fid_status": "paper-reported; released checkpoint-to-result mapping not independently verified"
+    },
+    "ort-e-alitok-xl-300": {
+      "file": "ort-e-alitok-xl-300.bin",
+      "config": "configs/ort-e-alitok-xl-300.yaml",
+      "sha256": "4a99f02de89bd35ca4629a3df61a6f85484a1bd9139e5ac3512a7136fba1dc3c",
+      "size": 2661983138,
+      "standard_loader_supported": true,
+      "epochs": 300,
+      "training_steps": 187500,
+      "training_seed": 42,
+      "paper_fid": 1.26,
+      "fid_status": "paper-reported; released checkpoint-to-result mapping not independently verified"
+    },
+    "ort-l-alitok-xl-300": {
+      "file": "ort-l-alitok-xl-300.bin",
+      "config": "configs/ort-l-alitok-xl-300.yaml",
+      "sha256": "ddfc6561d9c344ea0ff9415cfb48c433715a0db0d152aa50ae3fea72f7f38c34",
+      "size": 2661983138,
+      "standard_loader_supported": true,
+      "epochs": 300,
+      "training_steps": 187500,
+      "training_seed": 42,
+      "paper_fid": 1.34,
+      "fid_status": "paper-reported; released checkpoint-to-result mapping not independently verified"
+    },
+    "ort-l-alitok-xl-400": {
+      "file": "ort-l-alitok-xl-400.bin",
+      "config": "configs/ort-l-alitok-xl-400.yaml",
+      "sha256": "3fba113df943ed8dd21cb1d1b2ddaa4d061356285378ddb908f5f9196c83ba37",
+      "size": 2661983138,
+      "standard_loader_supported": true,
+      "epochs": 400,
+      "training_steps": 250000,
+      "training_seed": 42,
+      "paper_fid": 1.31,
+      "fid_status": "paper-reported; released checkpoint-to-result mapping not independently verified"
     }
   }
 }
