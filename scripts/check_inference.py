@@ -6,9 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import torch
 from omegaconf import OmegaConf
 from PIL import Image
-from modeling.generators import ORTModel
-from modeling.losses import ORTARLoss
-from modeling.tokenizers import AliTok
+from modeling.factory import build_model, build_tokenizer, build_loss, configure_order, training_outputs
 
 p = argparse.ArgumentParser()
 p.add_argument('--config', required=True)
@@ -20,7 +18,7 @@ p.add_argument('--backward-check', action='store_true', help='Run one synthetic 
 a = p.parse_args()
 c = OmegaConf.load(a.config)
 torch.manual_seed(a.seed)
-m = ORTModel(c)
+m = build_model(c)
 s = torch.load(a.checkpoint, map_location='cpu', weights_only=True)
 s = s.get('model', s)
 s = {k.removeprefix('_orig_mod.'): v for k,v in s.items()}
@@ -28,14 +26,13 @@ m.load_state_dict(s, strict=True)
 m.cuda().eval()
 with torch.inference_mode(), torch.autocast('cuda', dtype=torch.bfloat16):
     tokens = m.generate(torch.tensor([1], device='cuda'), guidance_scale=1.0, guidance_scale_pow=1.0, randomize_temperature=1.0)
-assert tokens.shape == (1,273)
+assert tokens.shape == (1,c.model.generator.image_seq_len)
 assert tokens.min() >= 0 and tokens.max() < c.model.vq_model.codebook_size
 r = Path(a.output);r.mkdir(parents=True, exist_ok=True)
 torch.save(tokens.cpu(), r / 'tokens.pt')
-print('PASS strict checkpoint load and 273-token autoregressive inference', flush=True)
+print(f'PASS strict checkpoint load and {tokens.shape[1]}-token autoregressive inference', flush=True)
 if a.tokenizer_weights:
-    d = AliTok()
-    d.load_state_dict(torch.load(a.tokenizer_weights, map_location='cpu', weights_only=True), strict=True)
+    d = build_tokenizer(c, a.tokenizer_weights)
     d.cuda().eval()
     with torch.inference_mode(), torch.autocast('cuda', dtype=torch.bfloat16):
         pixels = d.decode_tokens(tokens)
@@ -47,11 +44,11 @@ if a.tokenizer_weights:
 if a.backward_check:
     tokens = tokens.clone()
     m.train()
-    m.set_random_ratio(1.0)
+    configure_order(m,c,0)
     optimizer = torch.optim.AdamW(m.parameters(), lr=1e-5)
     with torch.autocast('cuda', dtype=torch.bfloat16):
-        logits, labels, weights = m(tokens, m.preprocess_condition(torch.tensor([1], device='cuda')), return_labels=True)
-        loss, _ = ORTARLoss(c)(logits, labels, weights)
+        logits, labels, weights = training_outputs(m,tokens,m.preprocess_condition(torch.tensor([1],device='cuda')),c)
+        loss, _ = build_loss(c)(logits, labels, weights)
     assert torch.isfinite(loss)
     loss.backward()
     grads = [v.grad for v in m.parameters() if v.grad is not None]

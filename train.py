@@ -17,12 +17,7 @@ from torch.optim import AdamW
 from torch.utils.data import DataLoader, Dataset
 
 from modeling.losses import ORTARLoss
-from modeling.generators import ORTModel
-
-def build_model(config):
-    if config.model.generator.type != "ort":
-        raise ValueError("Only the ORT generator is included")
-    return ORTModel(config)
+from modeling.factory import build_model, training_outputs, configure_order, build_loss
 
 
 class PretokenizedDataset(Dataset):
@@ -165,7 +160,7 @@ def main() -> None:
     )
 
     model = build_model(config)
-    loss_module = ORTARLoss(config)
+    loss_module = build_loss(config)
     optimizer = optimizer_for(model, config)
     scheduler = cosine_scheduler(optimizer, config)
     model, optimizer, dataloader = accelerator.prepare(
@@ -195,16 +190,14 @@ def main() -> None:
                 break
 
             unwrapped = accelerator.unwrap_model(model)
-            unwrapped.set_random_ratio(unwrapped.get_rar_random_ratio(config, step))
-            alpha, beta = unwrapped.get_rar_alpha_beta_weight(config, step)
-            unwrapped.set_alpha_beta_weight(alpha, beta)
+            configure_order(unwrapped, config, step)
 
             with accelerator.accumulate(model):
                 condition = unwrapped.preprocess_condition(
                     batch["label"],
                     cond_drop_prob=config.model.generator.class_label_dropout,
                 )
-                logits, labels, weight = model(batch["tokens"], condition, return_labels=True)
+                logits, labels, weight = training_outputs(model, batch["tokens"], condition, config)
                 loss, metrics = loss_module(logits, labels, weight)
                 accelerator.backward(loss)
                 if accelerator.sync_gradients:
@@ -222,7 +215,7 @@ def main() -> None:
                 accuracy = accelerator.gather(metrics["correct_tokens"].detach()).mean().item()
                 accelerator.print(
                     f"step={step} loss={loss.detach().item():.5f} "
-                    f"token_accuracy={accuracy:.5f} random_ratio={unwrapped.random_ratio:.4f}"
+                    f"token_accuracy={accuracy:.5f} random_ratio={getattr(unwrapped, 'random_ratio', 0.0):.4f}"
                 )
             if step % config.experiment.save_every == 0:
                 save_checkpoint(accelerator, model, output_dir, step, epoch, batch_offset)

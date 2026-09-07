@@ -17,3 +17,8 @@ On 2026-09-07, the official AliTok checkout at
 15410babdf944c957dcde96cc6d09e246bad9c3e contained no LICENSE, COPYING, or
 NOTICE file. Its attribution headers alone do not establish redistribution
 permission for AliTok-specific adaptations. Public release remains blocked.
+
+Original AliTok and RAR generator files are included from the pinned revisions
+in docs/BASELINES.md. MaskGIT VQGAN code retains Google, Hugging Face and Bytedance
+attribution and Apache-2.0 notices. The pretrained MaskGIT tokenizer wrapper was
+extracted from upstream titok.py with unrelated imports/classes removed.

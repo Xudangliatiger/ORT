@@ -1,0 +1,12 @@
+{
+  "repo_id": "donglixu/ORT",
+  "models": {
+    "ort-e-alitok-xl-400": {
+      "file": "ort-e-alitok-xl-400.bin",
+      "config": "configs/ort-e-alitok-xl-400.yaml",
+      "sha256": "9fec7c815728ab9bec5f41c39151c4da6786d1f7ed4eb916f98a555c7b0d1094",
+      "size": 2661983138,
+      "standard_loader_supported": true
+    }
+  }
+}

@@ -15,6 +15,8 @@ for path in root.rglob("*"):
     if path.suffix in {".bin", ".pt", ".pth", ".npz", ".safetensors"}:
         issues.append(f"Unexpected binary artifact: {path.relative_to(root)}")
         continue
+    if path.suffix.lower() in {".png", ".jpg", ".jpeg"}:
+        continue
     text = path.read_text()
     if path.suffix == ".py":
         ast.parse(text, filename=str(path))

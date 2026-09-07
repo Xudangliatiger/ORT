@@ -9,8 +9,7 @@ from pathlib import Path
 import numpy as np
 from omegaconf import OmegaConf
 import torch
-from modeling.generators import ORTModel
-from modeling.tokenizers import AliTok
+from modeling.factory import build_model, build_tokenizer
 
 
 def main():
@@ -31,9 +30,8 @@ def main():
     output = Path(a.output)
     if output.exists():
         raise ValueError('Output exists; choose a new path')
-    decoder = AliTok()
-    decoder.load_state_dict(torch.load(a.tokenizer_weights, map_location='cpu', weights_only=True), strict=True)
-    model = ORTModel(c)
+    decoder = build_tokenizer(c, a.tokenizer_weights)
+    model = build_model(c)
     state = torch.load(a.checkpoint, map_location='cpu', weights_only=True)
     state = state.get('model', state)
     state = {k.removeprefix('_orig_mod.'): v for k, v in state.items()}

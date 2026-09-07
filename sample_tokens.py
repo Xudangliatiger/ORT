@@ -9,13 +9,7 @@ import numpy as np
 from omegaconf import OmegaConf
 import torch
 
-from modeling.generators import ORTModel
-from modeling.generators import ORTModel
-
-def build_model(config):
-    if config.model.generator.type != "ort":
-        raise ValueError("Only the ORT generator is included")
-    return ORTModel(config)
+from modeling.factory import build_model, training_outputs, configure_order, build_loss
 
 
 def parse_args() -> argparse.Namespace:
