@@ -1,11 +1,6 @@
 <div align="center">
 
-# Not All Positions Are Equal
-### Ordinal Asymmetry in Efficient Visual Autoregressive Model Training
-
-**Official implementation of “Not All Positions Are Equal: Ordinal Asymmetry in Efficient Visual Autoregressive Model Training”.**
-
-**ORT — Ordinal-biased Random Training**
+# ORT — Ordinal-biased Random Training: Ordinal Asymmetry in Efficient Visual Autoregressive Model Training
 
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.9.1-tested-EE4C2C?logo=pytorch&logoColor=white)](#installation)
 [![GPU smoke](https://img.shields.io/badge/GH200-train%20%26%20inference%20passed-2ea44f)](#validation)
