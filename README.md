@@ -72,28 +72,30 @@ ImageNet-256 results, grouped by training budget. **Official** links point to up
 
 ### 300 epochs
 
-| Model | Epochs | Pretraining / Post-training / Test | Source | FID ↓ (reported) | Checkpoint | Recipe |
+| Model | Epochs | Pretraining | Source | FID ↓ (reported) | Checkpoint | Recipe |
 |---|---:|---|---|---:|---|---|
-| RAR-B baseline | 300 | Random / Raster / Raster | Ours, paper ablation | 2.04 | Not released | — |
-| AliTok-XL baseline + RAR | 300 | Random / Raster / Raster | Ours (AliTok*-XL) | 1.42 | Not released | — |
-| AliTok-XL baseline + ORT-L | 300 | Random / Raster / Raster | Ours | 1.34 | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-l-alitok-xl-300.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-l-alitok-xl-300.yaml) |
-| AliTok-XL baseline + ORT-E | 300 | Random / Raster / Raster | Ours | **1.26** | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-e-alitok-xl-300.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-e-alitok-xl-300.yaml) |
+| RAR-B baseline | 300 | Random | Ours, paper ablation | 2.04 | Not released | — |
+| AliTok-XL\* | 300 | Random | Ours | 1.42 | Not released | — |
+| AliTok-XL\* + ORT-L | 300 | Random | Ours | 1.34 | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-l-alitok-xl-300.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-l-alitok-xl-300.yaml) |
+| AliTok-XL\* + ORT-E | 300 | Random | Ours | **1.26** | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-e-alitok-xl-300.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-e-alitok-xl-300.yaml) |
 
 ### 400 epochs
 
-| Model | Epochs | Pretraining / Post-training / Test | Source | FID ↓ (reported) | Checkpoint | Recipe |
+| Model | Epochs | Pretraining | Source | FID ↓ (reported) | Checkpoint | Recipe |
 |---|---:|---|---|---:|---|---|
-| RAR-B baseline | 400 | Random / Raster / Raster | Official | 1.95 | [Weights](https://huggingface.co/yucornetto/RAR/blob/main/rar_b.bin) | [Upstream](https://github.com/bytedance/1d-tokenizer/blob/main/README_RAR.md) |
-| RAR-L baseline | 400 | Random / Raster / Raster | Official | 1.70 | [Weights](https://huggingface.co/yucornetto/RAR/blob/main/rar_l.bin) | [Upstream](https://github.com/bytedance/1d-tokenizer/blob/main/README_RAR.md) |
-| RAR-XL baseline | 400 | Random / Raster / Raster | Official | 1.50 | [Weights](https://huggingface.co/yucornetto/RAR/blob/main/rar_xl.bin) | [Config](configs/rar_xl_original_400.yaml) |
-| AliTok-XL baseline | 400 | Raster / Raster / Raster | Official | 1.35 | [Weights](https://github.com/ali-vilab/alitok#-usage) | [Config](configs/alitok_xl_original_400.yaml) |
-| AliTok-XL baseline + RAR | 400 | Random / Raster / Raster | Ours (AliTok*-XL) | 1.35 | Not released | — |
-| AliTok-XL baseline + ORT-L | 400 | Random / Raster / Raster | Ours | 1.31 | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-l-alitok-xl-400.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-l-alitok-xl-400.yaml) |
-| AliTok-XL baseline + ORT-E | 400 | Random / Raster / Raster | Ours | **1.18** | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-e-alitok-xl-400.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-e-alitok-xl-400.yaml) |
+| RAR-B baseline | 400 | Random | Official | 1.95 | [Weights](https://huggingface.co/yucornetto/RAR/blob/main/rar_b.bin) | [Upstream](https://github.com/bytedance/1d-tokenizer/blob/main/README_RAR.md) |
+| RAR-L baseline | 400 | Random | Official | 1.70 | [Weights](https://huggingface.co/yucornetto/RAR/blob/main/rar_l.bin) | [Upstream](https://github.com/bytedance/1d-tokenizer/blob/main/README_RAR.md) |
+| RAR-XL baseline | 400 | Random | Official | 1.50 | [Weights](https://huggingface.co/yucornetto/RAR/blob/main/rar_xl.bin) | [Config](configs/rar_xl_original_400.yaml) |
+| AliTok-XL baseline | 400 | Raster | Official | 1.35 | [Weights](https://github.com/ali-vilab/alitok#-usage) | [Config](configs/alitok_xl_original_400.yaml) |
+| AliTok-XL\* | 400 | Random | Ours | 1.35 | Not released | — |
+| AliTok-XL\* + ORT-L | 400 | Random | Ours | 1.31 | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-l-alitok-xl-400.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-l-alitok-xl-400.yaml) |
+| AliTok-XL\* + ORT-E | 400 | Random | Ours | **1.18** | [Weights](https://huggingface.co/donglixu/ORT/resolve/main/ort-e-alitok-xl-400.bin) | [Config](https://huggingface.co/donglixu/ORT/blob/main/configs/ort-e-alitok-xl-400.yaml) |
 
-**Stage order.** The pretraining / post-training / test column describes token order in generator training and evaluation. RAR and ORT use randomized pretraining, anneal through a mixed-order transition, and finish with raster-order post-training and testing. The original AliTok baseline uses raster order throughout; these stage labels do not imply an additional tokenizer-training stage.
+\* denotes models reimplemented and trained by us. AliTok-XL\* uses the RAR-like randomized pretraining recipe, while the official AliTok-XL baseline uses raster order.
 
-**Baseline identity.** AliTok*-XL in our paper means our implementation using the RAR-like randomized training recipe; it is distinct from the official raster-order AliTok generator. Its baseline FIDs are 1.42 / 1.35 at 300 / 400 epochs. The official RAR-XL download reports 1.50; our paper's RAR-XL reproduction reports 1.51, and its matching checkpoint is not released here. RAR uses the MaskGIT tokenizer; AliTok models use the AliTok tokenizer. See [baseline setup](docs/BASELINES.md).
+**Post-training and test.** All listed models use raster order for post-training and test. Randomized pretraining transitions to raster order through a mixed-order annealing phase.
+
+The official RAR-XL download reports FID 1.50; our paper's RAR-XL reproduction reports 1.51, and its matching checkpoint is not released here. RAR uses the MaskGIT tokenizer; AliTok models use the AliTok tokenizer. See [baseline setup](docs/BASELINES.md).
 
 **Metric sources.** Official results come from the [RAR model zoo](https://github.com/bytedance/1d-tokenizer/blob/main/README_RAR.md#model-zoo) and [AliTok model table](https://github.com/ali-vilab/alitok#-usage); our results are paper-reported (main comparison, AliTok comparison and full-training ablation). These are not new evaluations of the linked files. Exact per-row evaluation CFG and sampling seed for our runs remain unverified.
 
