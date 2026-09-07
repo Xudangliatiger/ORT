@@ -48,6 +48,30 @@
       "training_seed": 42,
       "paper_fid": 1.31,
       "fid_status": "paper-reported; released checkpoint-to-result mapping not independently verified"
+    },
+    "alitok-xl-baseline-300": {
+      "file": "alitok-xl-baseline-300.bin",
+      "config": "configs/alitok-xl-baseline-300.yaml",
+      "sha256": "bcfb13aecda05026d09c4235102f3b234c02737c45761c2a9bde0e20f15bbaa6",
+      "size": 2661983138,
+      "standard_loader_supported": true,
+      "epochs": 300,
+      "training_steps": 187500,
+      "training_seed": 42,
+      "paper_fid": 1.42,
+      "fid_status": "paper-reported; released checkpoint-to-result mapping not independently verified"
+    },
+    "alitok-xl-baseline-400": {
+      "file": "alitok-xl-baseline-400.bin",
+      "config": "configs/alitok-xl-baseline-400.yaml",
+      "sha256": "276d4e5771865aeeb9f22941ba8214efc213b42faf200859ab3ca9bf1b03f3af",
+      "size": 2661983138,
+      "standard_loader_supported": true,
+      "epochs": 400,
+      "training_steps": 250000,
+      "training_seed": 42,
+      "paper_fid": 1.35,
+      "fid_status": "paper-reported; released checkpoint-to-result mapping not independently verified"
     }
   }
 }
