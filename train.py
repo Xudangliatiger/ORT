@@ -85,6 +85,19 @@ def cosine_scheduler(optimizer: AdamW, config):
     return torch.optim.lr_scheduler.LambdaLR(optimizer, scale)
 
 
+def epoch_loader(accelerator, dataloader, epoch: int, batch_offset: int):
+    """Loader for one epoch, resuming after `batch_offset` batches when nonzero."""
+    dataloader.set_epoch(epoch)
+    if not batch_offset:
+        # Never wrap at offset 0: skip_first_batches returns a new loader whose __iter__ calls
+        # set_epoch(self.iteration=0), resetting the shared sampler to epoch 0. That froze the
+        # shuffle order and the per-worker crop RNG from epoch 1 onward.
+        return dataloader
+    loader = accelerator.skip_first_batches(dataloader, batch_offset)
+    loader.set_epoch(epoch)
+    return loader
+
+
 def save_checkpoint(accelerator, model, output_dir, step, epoch, batch_offset):
     accelerator.wait_for_everyone()
     checkpoint_dir = output_dir / f"checkpoint-{step:07d}"
@@ -183,8 +196,7 @@ def main() -> None:
     if not len(dataloader):
         raise ValueError("Dataset does not contain one complete distributed batch")
     while step < stop_at:
-        dataloader.set_epoch(epoch)
-        active_loader = accelerator.skip_first_batches(dataloader, batch_offset)
+        active_loader = epoch_loader(accelerator, dataloader, epoch, batch_offset)
         for batch in active_loader:
             if step >= stop_at:
                 break

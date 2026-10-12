@@ -43,9 +43,13 @@ python scripts/prepare_dataset.py --jsonl data/rar_source/maskgitvq.jsonl \
   --label-key class_id --tokenizer maskgit --output data/imagenet_maskgit_train
 ```
 
-The official file's complete record count and crop grouping have not been audited
-here; do not impose the AliTok dataset's count on it without checking. Its first
-32 records passed real-token training/resume checks with the new RAR adapters.
+The official file has 12,811,680 lines: 1,281,167 images × 10 crops, one crop per
+line, plus 10 extra lines (upstream trains on all of them). Convert it line by line
+as above, so that **one record is one crop**. This is how upstream RAR reads the file:
+every crop is its own sample and each epoch visits every crop once. Do **not** group
+the 10 crops of an image into one record for RAR; per-visit random crop selection
+overfits measurably faster than the upstream layout. Validate with
+`--expected-count 12811680`.
 
 ## Starting from images
 
@@ -76,9 +80,9 @@ with torch.inference_mode():
     codes = result['min_encoding_indices'].reshape(images.shape[0], 273)
 ```
 
-Export one record per original image. With multiple crops, collect the encoded
-sequences into that image's `tokens` list. Do not export every crop as a separate
-image: that changes dataset length and training exposure. Image loading, GPU
+For AliTok, export one record per original image and collect multiple crops into
+that image's `tokens` list, matching the published AliTok dataset. For RAR, export
+one record per crop, matching the official MaskGIT file and upstream RAR. Image loading, GPU
 sharding and preprocessing must be supplied by your preprocessing pipeline; this
 release does not yet provide a validated end-to-end image encoding launcher.
 Training with already encoded IDs does not load the tokenizer. Image sampling
@@ -94,8 +98,9 @@ A record has an integer `label` and either one sequence or multiple crop sequenc
 {"label": 17, "tokens": [[crop0_id_0, ..., crop0_id_255], [crop1_id_0, ..., crop1_id_255]]}
 ```
 
-These are schematic examples, not literal JSON. Use 273 IDs for AliTok. The
-trainer randomly selects one saved crop per image visit. It does not perform
+These are schematic examples, not literal JSON. Use 273 IDs for AliTok. For a
+multi-crop record the trainer randomly selects one saved crop per visit (AliTok
+layout); RAR records hold a single crop. The trainer does not perform
 online image crops or flips; preprocessing fields in YAML do not augment token IDs.
 
 ## Convert existing JSONL
@@ -105,14 +110,14 @@ From the repository root:
 ```bash
 python scripts/prepare_dataset.py \
   --jsonl /path/to/maskgit_tokens.jsonl \
-  --tokenizer maskgit --expected-count 1281167 \
+  --tokenizer maskgit --expected-count 12811680 \
   --output data/imagenet_maskgit_train
 ```
 
 Multiple JSONL shards can follow `--jsonl`. If your export uses different column
 names, provide `--label-key` and `--tokens-key`; inspect its actual schema first.
-Conversion preserves image order, labels, token IDs and all crop variants. It
-normalizes single sequences to one-crop lists and saves only the training columns.
+Conversion preserves line order, labels, token IDs and all crop variants, one record
+per JSONL line. It normalizes single sequences to one-crop lists and saves only the training columns.
 Existing output directories are never overwritten. Temporary Arrow data uses the
 Hugging Face Datasets cache; configure `HF_DATASETS_CACHE` on spacious storage when
 needed. Perform conversion where the large source files already reside.
@@ -124,7 +129,7 @@ For AliTok, use `--tokenizer alitok` and a separate output directory.
 ```bash
 python scripts/prepare_dataset.py \
   --dataset data/imagenet_maskgit_train \
-  --tokenizer maskgit --expected-count 1281167
+  --tokenizer maskgit --expected-count 12811680
 ```
 
 This scans every record for integer labels, sequence length and token-ID range,
